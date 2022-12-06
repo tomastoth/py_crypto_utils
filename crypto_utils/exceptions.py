@@ -9,3 +9,7 @@ class MissingDataError(Exception):
 
 class CantFindTokenPriceError(Exception):
     pass
+
+
+class CantExtractUsdValueError(Exception):
+    pass

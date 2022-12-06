@@ -1,3 +1,4 @@
+import typing
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -8,7 +9,7 @@ import eth_typing
 class DecodedLog:
     name: str
     signature: str
-    params: list[dict[str, any]]
+    params: list[dict[str, typing.Any]]
 
 
 @dataclass
