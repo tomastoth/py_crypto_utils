@@ -1,3 +1,4 @@
+import logging
 import time
 import typing
 from abc import ABC, abstractmethod
@@ -8,6 +9,8 @@ import gql
 from gql.transport import requests as requests_transport
 
 from crypto_utils import enums, exceptions, http_utils
+
+log = logging.getLogger(__name__)
 
 
 class TransactionValueUsdProvider(ABC):
@@ -31,8 +34,7 @@ class PriceProvider(ABC):
         pass
 
 
-class UniswapV3PriceProvider(TransactionValueUsdProvider):
-    UNISWAP_SUBGRAPH_URL = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3"
+class UniswapPriceProvider(TransactionValueUsdProvider):
     QUERY = gql.gql(
         """
         query priceQuery($transaction_hash: String){
@@ -48,10 +50,8 @@ class UniswapV3PriceProvider(TransactionValueUsdProvider):
         """
     )
 
-    def __init__(self) -> None:
-        self._transport = requests_transport.RequestsHTTPTransport(
-            url=self.UNISWAP_SUBGRAPH_URL
-        )
+    def __init__(self, graph_url: str) -> None:
+        self._transport = requests_transport.RequestsHTTPTransport(url=graph_url)
         self._client = gql.Client(
             transport=self._transport, fetch_schema_from_transport=True
         )
@@ -79,6 +79,41 @@ class UniswapV3PriceProvider(TransactionValueUsdProvider):
             return self._get_price_from_subgraph(request_variables)
         except Exception as exception:
             raise exceptions.CantExtractUsdValueError(str(exception))
+
+
+class UniswapV3PriceProvider(UniswapPriceProvider):
+    UNISWAP_SUBGRAPH_URL = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3"
+
+    def __init__(self):
+        super().__init__(graph_url=UniswapV3PriceProvider.UNISWAP_SUBGRAPH_URL)
+
+
+class UniswapV2PriceProvider(UniswapPriceProvider):
+    UNISWAP_SUBGRAPH_URL = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2"
+
+    def __init__(self):
+        super().__init__(graph_url=UniswapV2PriceProvider.UNISWAP_SUBGRAPH_URL)
+
+
+class UniswapTransactionValueUsdProvider(TransactionValueUsdProvider):
+    def __init__(self):
+        self._v3_value_provider = UniswapV3PriceProvider()
+        self._v2_value_provider = UniswapV2PriceProvider()
+
+    def get_usd_value_of_transaction(
+        self,
+        transaction_hash: eth_typing.ChecksumAddress,
+        blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
+    ) -> float:
+        try:
+            return self._v3_value_provider.get_usd_value_of_transaction(
+                transaction_hash
+            )
+        except exceptions.CantExtractUsdValueError as e:
+            log.debug(
+                f"Could not get uniswap v3 price for transaction: {transaction_hash}, err: {e}"
+            )
+        return self._v2_value_provider.get_usd_value_of_transaction(transaction_hash)
 
 
 class CoingeckoPriceProvider(PriceProvider):
