@@ -16,9 +16,9 @@ log = logging.getLogger(__name__)
 class TransactionValueUsdProvider(ABC):
     @abstractmethod
     def get_usd_value_of_transaction(
-        self,
-        transaction_hash: eth_typing.ChecksumAddress,
-        blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
+            self,
+            transaction_hash: eth_typing.ChecksumAddress,
+            blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
     ) -> float:
         pass
 
@@ -26,10 +26,10 @@ class TransactionValueUsdProvider(ABC):
 class PriceProvider(ABC):
     @abstractmethod
     def get_price_of_contract_in_usd(
-        self,
-        contract_address: eth_typing.ChecksumAddress,
-        at_time: int,
-        blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
+            self,
+            contract_address: eth_typing.ChecksumAddress,
+            at_time: int,
+            blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
     ) -> float | None:
         pass
 
@@ -57,7 +57,7 @@ class UniswapPriceProvider(TransactionValueUsdProvider):
         )
 
     def _get_price_from_subgraph(
-        self, request_variables: dict[str, typing.Any]
+            self, request_variables: dict[str, typing.Any]
     ) -> float:
         json_result = self._client.execute(
             self.QUERY, variable_values=request_variables
@@ -70,9 +70,9 @@ class UniswapPriceProvider(TransactionValueUsdProvider):
         return price
 
     def get_usd_value_of_transaction(
-        self,
-        transaction_hash: eth_typing.ChecksumAddress,
-        blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
+            self,
+            transaction_hash: eth_typing.ChecksumAddress,
+            blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
     ) -> float:
         request_variables = {"transaction_hash": transaction_hash}
         try:
@@ -101,9 +101,9 @@ class UniswapTransactionValueUsdProvider(TransactionValueUsdProvider):
         self._v2_value_provider = UniswapV2PriceProvider()
 
     def get_usd_value_of_transaction(
-        self,
-        transaction_hash: eth_typing.ChecksumAddress,
-        blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
+            self,
+            transaction_hash: eth_typing.ChecksumAddress,
+            blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
     ) -> float:
         try:
             return self._v3_value_provider.get_usd_value_of_transaction(
@@ -137,10 +137,10 @@ class CoingeckoPriceProvider(PriceProvider):
                 return "ethereum"
 
     def get_price_of_contract_in_usd(
-        self,
-        contract_address: eth_typing.ChecksumAddress,
-        at_time: int,
-        blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
+            self,
+            contract_address: eth_typing.ChecksumAddress,
+            at_time: int,
+            blockchain: enums.Blockchain = enums.Blockchain.ETHEREUM,
     ) -> float | None:
         blockchain_id = self._get_blockchain_id(blockchain)
         at_time_datetime = datetime.fromtimestamp(at_time)
@@ -160,3 +160,34 @@ class CoingeckoPriceProvider(PriceProvider):
         if time_diff > timedelta(hours=1):
             print(f"Coingecko price time delta is {time_diff}")
         return last_price_array[1]  # price at 1st index
+
+
+class CexPriceProvider(ABC):
+    @abstractmethod
+    def get_price_of_token(self, symbol: str, at_time: datetime) -> float:
+        pass
+
+
+class BinancePriceProvider(CexPriceProvider):
+    BINANCE_URL = "https://data.binance.com/api/v3"
+
+    def get_price_of_token(self, symbol: str, at_time: datetime) -> float:
+        start_time = int(at_time.timestamp() * 1000)
+        end_time_plus_min = at_time + timedelta(minutes=1)
+        end_time = int(end_time_plus_min.timestamp() * 1000)
+        url = f"{self.BINANCE_URL}/klines"
+        symbol_with_usdt = f"{symbol.upper()}USDT"
+        params = {
+            "symbol": symbol_with_usdt,
+            "interval": "1m",
+            "startTime": start_time,
+            "endTime": end_time,
+            "limit": 1
+        }
+        try:
+            result_json = http_utils.request(url, params)
+            single_candle_info = result_json[0]
+            close_price = float(single_candle_info[4])
+            return close_price
+        except Exception as e:
+            raise exceptions.MissingDataError(e)
