@@ -519,7 +519,7 @@ python-versions = "*"
 
 [[package]]
 name = "web3"
-version = "5.31.2"
+version = "5.31.3"
 description = "Web3.py"
 category = "main"
 optional = false
@@ -527,7 +527,7 @@ python-versions = ">=3.6,<4"
 
 [package.dependencies]
 aiohttp = ">=3.7.4.post0,<4"
-eth-abi = ">=2.0.0b6,<3.0.0"
+eth-abi = ">=2.2.0,<3.0.0"
 eth-account = ">=0.5.9,<0.6.0"
 eth-hash = {version = ">=0.2.0,<1.0.0", extras = ["pycryptodome"]}
 eth-rlp = "<0.3"
@@ -1228,8 +1228,8 @@ varint = [
     {file = "varint-1.0.2.tar.gz", hash = "sha256:a6ecc02377ac5ee9d65a6a8ad45c9ff1dac8ccee19400a5950fb51d594214ca5"},
 ]
 web3 = [
-    {file = "web3-5.31.2-py3-none-any.whl", hash = "sha256:babb36aaf42e680b6f6f39dd1bd28aec8e9ae02d332b1e7aaaac24179bfb1edf"},
-    {file = "web3-5.31.2.tar.gz", hash = "sha256:fc27ef2acacb9375e1d486ce7b0f4188c5e543d65f7bb8692f8b969f408bfa9b"},
+    {file = "web3-5.31.3-py3-none-any.whl", hash = "sha256:39ad206db390ae1a9001522e300da66d766fa2f1bf2f15422f2fee29f97b81ef"},
+    {file = "web3-5.31.3.tar.gz", hash = "sha256:4b2d420647c81856e3cf398996cd3cc80c719dc3a10881884c5c3b1467e4f850"},
 ]
 websockets = [
     {file = "websockets-9.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:d144b350045c53c8ff09aa1cfa955012dd32f00c7e0862c199edcabb1a8b32da"},
