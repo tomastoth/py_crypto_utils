@@ -14,5 +14,6 @@ class CantFindTokenPriceError(Exception):
 class CantExtractUsdValueError(Exception):
     pass
 
+
 class UnknownSymbolError(Exception):
     pass
